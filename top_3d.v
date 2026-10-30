@@ -55,6 +55,27 @@ module top_3d #(parameter N = 15, M = 4, T = 2, MAX_ITER = 100) (clk, rst, start
         end
     endgenerate
 
+    //helper functions
+    function [2*8-1:0] pr_or;
+        input [1:0] pass_idx;
+        begin
+            case(pass_idx)
+                2'b00 : pr_or = "xy";
+                2'b01 : pr_or = "xz";
+                2'b10 : pr_or = "yz";
+                default : pr_or = "xy";
+            endcase
+        end
+    endfunction
+
+    task print_status;
+        input [1:0] pass_idx;
+        input [7:0] iters;
+        begin
+            $display("Done with %s pass, iter : %d", pr_or(pass_idx), iters);
+        end
+    endtask
+
     always @(posedge clk) begin
         if(rst) begin       //setting all registers to 0
             cube <= 0;
@@ -156,7 +177,8 @@ module top_3d #(parameter N = 15, M = 4, T = 2, MAX_ITER = 100) (clk, rst, start
                     state <= NEXT; 
                 end
 
-                NEXT : begin        
+                NEXT : begin    
+                    print_status(pass_idx, iters);    
                     if(pass_idx != 2'd2) begin
                         pass_idx <= pass_idx + 1;
                         state <= LOAD;
