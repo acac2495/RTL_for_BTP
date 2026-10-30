@@ -11,7 +11,7 @@ module top_3d #(parameter N = 15, M = 4, T = 2, MAX_ITER = 100) (clk, rst, start
     reg [N*N-1:0] err_2d [0:N-1];   //Ouptput 2d errors from 2d instances
     reg [N*N*N-1:0] cube;           //internally reconstructed cube
     reg [N*N-1:0] corr_2d [0:N-1];  //corrected 2d slices
-    reg start_2d;
+    reg start_2d;                   //common start signal for 2d decoders
 
     integer i, r, c;
 
