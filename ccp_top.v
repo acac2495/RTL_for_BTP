@@ -19,29 +19,22 @@ module ccp_top #(parameter T = 2, M = 4, N = 15) (clk, rst, r_in, start, done, c
 
     integer f;
 
-    //integer fail_fd;
-    //initial fail_fd = $fopen("../Protocol/failed_words.hex", "w");
-
     wire ready;
-    reg [N*N-1:0] r_in_captured, r_in_captured1;
+    reg [N*N-1:0] r_in_captured;
 
     wire [(2*T)*(2*T)*M-1:0] S_2t;
 
-    reg [(2*T)*(2*T)*M-1:0] S_2t_reg, S_2t_reg1;
+    reg [(2*T)*(2*T)*M-1:0] S_2t_reg;
     reg start_row, start_col;
 
     always @(posedge clk) begin
         if(rst) begin
             r_in_captured <= 0;
-            r_in_captured1 <= 0;
             S_2t_reg <= 0;
-            S_2t_reg1 <= 0;
         end
         else if(start && ready) begin
             r_in_captured <= r_in;
-            r_in_captured1 <= r_in_captured;
             S_2t_reg <= S_2t;
-            S_2t_reg1 <= S_2t_reg;
         end
     end
     
@@ -147,8 +140,6 @@ module ccp_top #(parameter T = 2, M = 4, N = 15) (clk, rst, r_in, start, done, c
     reg [(T+1)*M-1:0] col_sigma_arr_reg [0:T-1];
     reg [(T+1)*M-1:0] row_sigma_arr_reg [0:T-1];
 
-    //reg [(T+1)*M*T-1:0] col_sigma_arr_flat, row_sigma_arr_flat;
-
     reg col_done_flag_reg;
     reg row_done_flag_reg;
 
@@ -175,15 +166,11 @@ module ccp_top #(parameter T = 2, M = 4, N = 15) (clk, rst, r_in, start, done, c
                 col_sigma_arr_reg[ip] <= 0;
                 row_sigma_arr_reg[ip] <= 0;
             end
-            //col_sigma_arr_flat <= 0;
-            //row_sigma_arr_flat <= 0;
         end
         else begin
             for(ip = 0; ip < T; ip = ip + 1) begin
                 col_sigma_arr_reg[ip] <= col_sigma_arr[ip];
                 row_sigma_arr_reg[ip] <= row_sigma_arr[ip];
-                //col_sigma_arr_flat[(ip+1)*(T+1)*M-1 -: (T+1)*M] <= col_sigma_arr[ip];
-                //row_sigma_arr_flat[(ip+1)*(T+1)*M-1 -: (T+1)*M] <= row_sigma_arr[ip];
             end
         end
     end
@@ -268,12 +255,8 @@ module ccp_top #(parameter T = 2, M = 4, N = 15) (clk, rst, r_in, start, done, c
         else begin
             row_ccp_reg <= row_ccp;
             col_ccp_reg <= col_ccp;
-            //col_ccp_done_reg <= col_ccp_done;
-            //row_ccp_done_reg <= row_ccp_done;
             col_ccp_done_reg <= col_done_flag_reg;
             row_ccp_done_reg <= row_done_flag_reg;
-            //col_ccp_done_reg <= col_done_flag;
-            //row_ccp_done_reg <= row_done_flag;
         end
     end
 
@@ -539,192 +522,4 @@ module ccp_top #(parameter T = 2, M = 4, N = 15) (clk, rst, r_in, start, done, c
     );
 
     assign done = row_re_done_reg;
-
-    function [8*6-1:0] gf_str;
-        input [M-1:0] val;
-        begin
-            case(val)
-                4'b0000: gf_str = "0    ";
-                4'b1000: gf_str = "a^0  ";
-                4'b0100: gf_str = "a^1  ";
-                4'b0010: gf_str = "a^2  ";
-                4'b0001: gf_str = "a^3  ";
-                4'b1100: gf_str = "a^4  ";
-                4'b0110: gf_str = "a^5  ";
-                4'b0011: gf_str = "a^6  ";
-                4'b1101: gf_str = "a^7  ";
-                4'b1010: gf_str = "a^8  ";
-                4'b0101: gf_str = "a^9  ";
-                4'b1110: gf_str = "a^10 ";
-                4'b0111: gf_str = "a^11 ";
-                4'b1111: gf_str = "a^12 ";
-                4'b1011: gf_str = "a^13 ";
-                4'b1001: gf_str = "a^14 ";
-                default: gf_str = "??   ";
-            endcase
-        end
-    endfunction
-
-    integer p,q;
-
-    //debug statements
-
-    always @(posedge clk) begin
-        /*if(col_done_flag_reg) begin
-            $display("Received Code Word : ");
-            for (p = 0; p < N; p = p + 1) begin
-                for (q = 0; q < N; q = q + 1) begin
-                    $write("%b ", r_in_captured1[N*p + q]);
-                end
-                $display("");
-            end
-
-            $display("Syndromes 1-2t : ");
-            $display("%b", S_2t);
-            for (p = 1; p <= 2*T; p = p + 1) begin
-                for (q = 1; q <= 2*T; q = q + 1) begin
-                    $write("%s ", gf_str(S_2t_reg[((p-1)*(2*T) + (q-1)+1)*M-1 -: M]));
-                end
-                $display("");
-            end
-
-            $display("Non conjugate Column Syndromes : ");
-            for(p = 0; p < T; p = p + 1) begin
-                for (q = 1; q <= 2*T; q = q + 1) begin 
-                    $write("%s ", gf_str(col_synd_2t_conjug[p][M*q-1 -: M])); 
-                end
-                $display("");
-            end
-
-            $display("All upper Column Syndromes : ");
-            for(p = 0; p < 2*T; p = p + 1) begin
-                for (q = 1; q <= 2*T; q = q + 1) begin 
-                    $write("%s ", gf_str(col_synd_int[p][M*q-1 -: M])); 
-                end
-                $display("");
-            end
-
-            $display("Column location polynomials : ");
-            for(p = 0; p < T; p = p + 1) begin
-                for(q = 0; q <= T; q = q + 1) begin
-                    $write("%s ", gf_str(col_sigma_arr_reg[p][(q+1)*M - 1 -: M]));
-                end
-                $display("");
-            end
-
-            $display("Column rpos : ");
-            for(p = 0; p < T; p = p + 1) begin
-                $display("%b", col_rpos[(p+1)*N - 1 -: N]);
-            end
-
-            $display("Column lcm rpos : ");
-            $display("%b", col_rpos_lcm);
-
-            $display("Column roots found : ");
-            for(p = 0; p < T; p = p + 1) begin
-                $write("%s ", gf_str(roots_col[(p+1)*M-1 -: M]));
-            end
-            $display("");
-        end
-        
-        if(row_done_flag_reg) begin
-            $display("Row location polynomials : ");
-            for(p = 0; p < T; p = p + 1) begin
-                for(q = 0; q <= T; q = q + 1) begin
-                    $write("%s ", gf_str(row_sigma_arr_reg[p][(q+1)*M - 1 -: M]));
-                end
-                $display("");
-            end
-
-            $display("Row rpos : ");
-            for(p = 0; p < T; p = p + 1) begin
-                $display("%b", row_rpos[(p+1)*N - 1 -: N]);
-            end
-
-            $display("Row lcm rpos : ");
-            $display("%b", row_rpos_lcm);
-
-            $display("Row roots found : ");
-            for(p = 0; p < T; p = p + 1) begin
-                $write("%s ", gf_str(roots_row[(p+1)*M-1 -: M]));
-            end
-            $display("");
-        end
-        if(col_ccp_done_reg) begin
-            $display("Column ccp polynomial : ");
-            for(p = 0; p <= T; p = p + 1) begin
-                $write("%s ", gf_str(col_ccp_reg[(p+1)*M-1 -: M]));
-            end
-            $display("");
-        end
-        if(row_ccp_done_reg) begin
-            $display("Row ccp polynomial : ");
-            for(p = 0; p <= T; p = p + 1) begin
-                $write("%s ", gf_str(row_ccp_reg[(p+1)*M-1 -: M]));
-            end
-            $display("");
-        end
-        if(col_re_done_reg) begin
-            $display("All upper Column Syndromes : ");
-            for(p = 0; p < 2*T; p = p + 1) begin
-                for (q = 1; q <= 2*T; q = q + 1) begin 
-                    $write("%s ", gf_str(col_synd_int[p][M*q-1 -: M])); 
-                end
-                $display("");
-            end
-            $display("Extended column syndromes");
-            for(p = 0; p < 2*T; p = p + 1) begin
-                for (q = 1; q <= RE_STAGES; q = q + 1) begin 
-                    $write("%s ", gf_str(col_S_ext[p][M*q-1 -: M])); 
-                end
-                $display("");
-            end
-            $display("combined column syndromes : ");
-            for(p = 0; p < 2*T; p = p + 1) begin
-                for (q = 1; q <= N; q = q + 1) begin 
-                    $write("%s ", gf_str(col_synd_full[p][M*q-1 -: M])); 
-                end
-                $display("");
-            end
-            $display("packed as row wise syndromes : ");
-            for(p = 0; p < N; p = p + 1) begin
-                for (q = 0; q < 2*T; q = q + 1) begin 
-                    $write("%s ", gf_str(row_synds_partial[p][(q+1)*M-1 -: M])); 
-                end
-                $display("");
-            end
-        end*/
-        if(done & (r_in_captured != 0)) begin
-            /*$display("full syndrome after row recursive extension : ");
-            for(p = 0; p < N; p = p + 1) begin
-                for(q = 0; q < N; q = q + 1) begin
-                    $write("%s ", gf_str(synd_full_reg[p][(q+1)*M-1 -: M]));
-                end
-                $display("");
-            end
-            $display("Conjugate class IPs : ");
-            for (c = 0; c < TOTAL_CLASSES; c = c + 1) begin
-                $write("%s ", gf_str(classes[M*(c+1)-1 -: M]));
-            end
-            $display("");*/
-            
-            //$fdisplay(fail_fd, "%h", r_in_captured1);    
-            //$fflush(fail_fd);                            
-            
-            /*$display("Received Code Word : ");
-            for (p = 0; p < N; p = p + 1) begin
-                for (q = 0; q < N; q = q + 1) begin
-                    $write("%b ", r_in_captured[N*p + q]);
-                end
-                $display("");
-            end
-            $display("Obtained error vector : ");
-            for(p = 0; p < N; p = p + 1) begin
-                for(q = 0; q < N; q = q + 1) begin
-                    $write("%b ", c_out[N*p + q]);
-                end
-                $display("");
-            end*/  
-        end 
-    end
 endmodule
