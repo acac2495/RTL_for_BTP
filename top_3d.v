@@ -103,7 +103,7 @@ module top_3d #(parameter N = 15, M = 4, T = 2, MAX_ITER = 100) (clk, rst, start
                     done_3d <= 0;
                     fail_3d <= 0;
 
-                    if(start_2d) begin      //loading in the input cube (will operate on this register now)
+                    if(start_3d) begin      //loading in the input cube (will operate on this register now)
                         cube <= cube_in;
                         state <= LOAD;
                     end

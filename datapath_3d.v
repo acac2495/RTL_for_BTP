@@ -419,6 +419,7 @@ module datapath_3d #(parameter N = 15, M = 4, T = 2, MAX_ITER = 100) (clk, rst, 
                         corr0 <= r_in_0;
                     end
                     else begin
+                        if(~sweep_dirty) sweep_dirty <= 1;
                         corr0 <= err_2d_0 ^ r_in_0;
                     end
 
@@ -521,7 +522,6 @@ module datapath_3d #(parameter N = 15, M = 4, T = 2, MAX_ITER = 100) (clk, rst, 
                     end
 
                     state <= APPLY;
-                    sweep_dirty <= (check0 | check1 | check2 | check3 | check4 | check5 | check6 | check7 | check8 | check9 | check10 | check11 | check12 | check13 | check14);
                 end
 
                 APPLY : begin
