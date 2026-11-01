@@ -36,7 +36,7 @@ module top_3d #(parameter N = 15, M = 4, T = 2, MAX_ITER = 100) (clk, rst, start
 
     always @(*) begin
         for(i = 0; i < N; i = i + 1) begin
-            check[i] = (((r_in_2d[i] ^ err_2d[i]) == 0) && (r_in_2d[i] != 0));
+            check[i] = (((r_in_2d[i] ^ err_2d[i]) == 0) && (err_2d[i] != 0));
         end
     end
 
